@@ -1,0 +1,887 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Times2</title>
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="icons/favicon-16.png">
+<link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon.png">
+<link rel="apple-touch-icon" sizes="167x167" href="icons/apple-touch-icon-167.png">
+<link rel="apple-touch-icon" sizes="152x152" href="icons/apple-touch-icon-152.png">
+<link rel="manifest" href="manifest.json">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Times2">
+<meta name="theme-color" content="#4A2168">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --plum:#4A2168;
+    --plum-dark:#331349;
+    --plum-light:#6b3690;
+    --citrine:#D4E157;
+    --citrine-dark:#AFC233;
+    --cream:#FBF8F2;
+    --ink:#2A1A38;
+    --muted:#8a7d97;
+    --green:#3FAE5C;
+    --green-dark:#2E8B47;
+    --red:#E5484D;
+    --red-dark:#C13438;
+    --card:#ffffff;
+    --radius:18px;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color: transparent;}
+  html,body{
+    margin:0; padding:0; height:100%;
+    background: var(--cream);
+    color: var(--ink);
+    font-family: 'Nunito', -apple-system, "Segoe UI", sans-serif;
+    overscroll-behavior: none;
+  }
+  h1,h2,h3,.display{
+    font-family: 'Fredoka', 'Nunito', sans-serif;
+  }
+  button{ font-family: inherit; cursor:pointer; }
+  .screen{ display:none; min-height:100vh; flex-direction:column; }
+  .screen.active{ display:flex; }
+
+  /* ---------- NAV ---------- */
+  #nav{
+    background: var(--plum);
+    color:#fff;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding: 12px 16px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+    position: sticky; top:0; z-index: 50;
+  }
+  #nav .logo{
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    display:flex; align-items:center; gap:8px;
+  }
+  #nav .logo .x{ color: var(--citrine); }
+  #nav .right{ display:flex; gap:8px; align-items:center; }
+  .pill{
+    border: 1.5px solid rgba(255,255,255,0.4);
+    background: transparent;
+    color: #fff;
+    padding: 6px 14px;
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 600;
+    transition: all .15s ease;
+  }
+  .pill:hover{ background: rgba(255,255,255,0.12); }
+  .pill.solid{
+    background: var(--citrine);
+    border-color: var(--citrine);
+    color: var(--plum-dark);
+  }
+  .pill.solid:hover{ background: var(--citrine-dark); }
+  #nav .who{ font-size: 13px; opacity:0.85; margin-right:2px; }
+
+  /* ---------- GENERIC LAYOUT ---------- */
+  .wrap{
+    flex:1;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    padding: 28px 18px 60px;
+    width: 100%;
+  }
+  .card{
+    background: var(--card);
+    border-radius: var(--radius);
+    padding: 28px 24px;
+    box-shadow: 0 4px 20px rgba(74,33,104,0.08);
+    width: 100%;
+    max-width: 480px;
+  }
+  .title-lg{
+    font-size: 34px;
+    font-weight: 700;
+    color: var(--plum);
+    margin: 0 0 6px;
+    text-align:center;
+  }
+  .title-lg .x{ color: var(--citrine-dark); }
+  .subtitle{
+    text-align:center;
+    color: var(--muted);
+    font-size: 15px;
+    margin: 0 0 26px;
+    font-weight: 600;
+  }
+  .btn{
+    display:block;
+    width:100%;
+    border:none;
+    border-radius: 14px;
+    padding: 15px 20px;
+    font-size: 17px;
+    font-weight: 700;
+    color: #fff;
+    background: var(--plum);
+    transition: transform .1s ease, box-shadow .15s ease;
+  }
+  .btn:active{ transform: scale(0.97); }
+  .btn.citrine{ background: var(--citrine); color: var(--plum-dark); }
+  .btn.citrine:disabled{ background:#e8e4d8; color:#b3aca0; cursor:not-allowed; }
+  .btn.ghost{ background: transparent; color: var(--plum); border: 2px solid var(--plum); }
+  .btn.small{ padding: 10px 16px; font-size:14px; width:auto; }
+
+  input[type=text]{
+    width:100%;
+    padding: 14px 16px;
+    font-size: 17px;
+    border-radius: 12px;
+    border: 2px solid #e6e0ee;
+    outline: none;
+    margin-bottom: 14px;
+    font-family: inherit;
+    font-weight: 600;
+    color: var(--ink);
+  }
+  input[type=text]:focus{ border-color: var(--plum-light); }
+
+  .saved-names{
+    display:flex; flex-wrap:wrap; gap:8px; justify-content:center; margin-top: 18px;
+  }
+  .name-chip{
+    padding: 9px 16px;
+    border-radius: 999px;
+    background: #f2eef8;
+    border: none;
+    color: var(--plum);
+    font-weight: 700;
+    font-size: 14px;
+  }
+  .name-chip:active{ background:#e5dcf2; }
+  .divider-text{
+    text-align:center; color: var(--muted); font-size: 13px; font-weight:700;
+    margin: 22px 0 4px; text-transform: uppercase; letter-spacing: 0.04em;
+  }
+
+  /* ---------- NUMBER PICKER ---------- */
+  .num-grid{
+    display:grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin: 18px 0 22px;
+  }
+  .num-btn{
+    background: #f2eef8;
+    border: 2px solid transparent;
+    border-radius: 14px;
+    padding: 16px 0;
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--plum);
+  }
+  .num-btn.sel{
+    background: var(--citrine);
+    border-color: var(--citrine-dark);
+    color: var(--plum-dark);
+  }
+  .picker-actions{
+    display:flex; justify-content:center; gap:18px; margin-bottom: 6px;
+  }
+  .link-btn{
+    background:none; border:none; color: var(--plum-light); font-weight:700; font-size:13px; text-decoration:underline;
+  }
+
+  /* ---------- PRACTICE SCREEN ---------- */
+  #practice-wrap{ max-width: 720px; width:100%; padding: 12px 12px 40px; }
+  .status-row{
+    display:flex; justify-content:space-between; align-items:center;
+    margin-bottom: 14px; padding: 0 4px;
+  }
+  .status-chip{
+    background:#fff; border-radius: 12px; padding: 8px 14px;
+    font-weight:800; color: var(--plum); font-size:14px;
+    box-shadow: 0 2px 8px rgba(74,33,104,0.08);
+  }
+  #timer-chip{ font-variant-numeric: tabular-nums; }
+
+  #grid-card{
+    background:#fff;
+    border-radius: var(--radius);
+    box-shadow: 0 4px 20px rgba(74,33,104,0.08);
+    padding: 14px 10px;
+  }
+  #grid-scroll{
+    overflow-x: auto;
+    overflow-y: visible;
+    padding: 4px 2px 6px;
+  }
+  table.grid{ border-collapse: separate; border-spacing: 0; margin: 0 auto; }
+  table.grid th, table.grid td{
+    width: 34px; height: 34px;
+    text-align:center;
+    font-size: 12px;
+    font-weight: 700;
+    border: 1px solid #efeaf5;
+  }
+  table.grid th{ color: var(--muted); background:#faf8fc; }
+  table.grid th.corner{ background:#fff; border:none; }
+  table.grid th.active-hdr{ color: var(--plum); background: #efe6f7; }
+  table.grid td.cell{
+    color: var(--muted);
+    background: #fcfbfd;
+    transition: background .2s ease, transform .15s ease, color .2s ease;
+  }
+  table.grid td.cell.active-cell{
+    background: #fdf9e3;
+    box-shadow: inset 0 0 0 3px var(--citrine-dark);
+    color: var(--plum-dark);
+    font-weight: 800;
+    position: relative;
+    z-index: 1;
+  }
+  table.grid td.cell.correct{ background: var(--green); color:#fff; }
+  table.grid td.cell.revealed{ background: var(--red); color:#fff; }
+
+  #answer-area{
+    margin-top: 18px;
+    background:#fff;
+    border-radius: var(--radius);
+    padding: 20px;
+    box-shadow: 0 4px 20px rgba(74,33,104,0.08);
+    text-align:center;
+  }
+  #equation{
+    font-size: 26px;
+    font-weight: 700;
+    color: var(--plum);
+    margin-bottom: 14px;
+  }
+  #boxes-row{
+    display:flex; justify-content:center; gap:10px; margin-bottom: 14px; flex-wrap: wrap;
+  }
+  .digit-slot{
+    width: 52px; height: 64px;
+    border-radius: 12px;
+    border: 2.5px solid #d9cfe6;
+    background: #fbfafd;
+    display:flex; align-items:center; justify-content:center;
+    font-size: 30px;
+    font-weight: 800;
+    color: var(--plum);
+    font-variant-numeric: tabular-nums;
+    transition: border-color .15s ease, background .15s ease;
+  }
+  .digit-slot.filled{ border-color: var(--citrine-dark); background:#fdf9e3; }
+  .attempts-text{
+    font-size: 15px; font-weight:800; color: var(--muted); margin-bottom: 14px; min-height: 20px;
+  }
+  .attempts-text.warn{ color: var(--red-dark); }
+  #keypad{
+    display:grid;
+    grid-template-columns: repeat(3, 1fr);
+    column-gap: 20px;
+    row-gap: 10px;
+    max-width: 340px;
+    margin: 18px auto 0;
+    justify-items: center;
+  }
+  .key{
+    width: 76px;
+    height: 76px;
+    border-radius: 50%;
+    background: #f2eef8;
+    border: none;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size: 28px;
+    font-weight: 800;
+    color: var(--plum);
+    transition: transform .08s ease, background .1s ease;
+  }
+  .key:active{ transform: scale(0.94); background: #e5dcf2; }
+  .key.blank{ background: transparent; pointer-events:none; }
+  .key.back{ background: #f7e4e4; color: var(--red-dark); font-size: 24px; }
+  .key.back:active{ background: #f0d0d0; }
+
+  #start-overlay{
+    position: fixed; inset:0; background: rgba(42,26,56,0.55);
+    display:flex; align-items:center; justify-content:center; z-index: 40;
+    padding: 20px;
+  }
+  #start-overlay .card{ text-align:center; }
+
+  /* ---------- RESULTS ---------- */
+  .result-big{
+    font-size: 52px; font-weight: 700; color: var(--plum); text-align:center; margin: 6px 0;
+    font-variant-numeric: tabular-nums;
+  }
+  .result-label{ text-align:center; color: var(--muted); font-weight:700; font-size:13px; text-transform:uppercase; letter-spacing:0.05em; }
+  .result-row{ display:flex; gap:14px; margin: 22px 0; }
+  .result-box{ flex:1; background:#f7f4fb; border-radius:14px; padding: 16px; text-align:center; }
+  .result-box .num{ font-size: 26px; font-weight:800; color: var(--plum); }
+  .result-msg{ text-align:center; font-size:17px; font-weight:700; color: var(--plum); margin-bottom: 6px; }
+  .result-actions{ display:flex; flex-direction:column; gap:10px; margin-top: 10px; }
+
+  /* ---------- HISTORY ---------- */
+  #history-wrap{ max-width: 640px; width:100%; }
+  .lb-table{ width:100%; border-collapse: collapse; background:#fff; border-radius: var(--radius); overflow:hidden; box-shadow: 0 4px 20px rgba(74,33,104,0.08); }
+  .lb-table th{ background: var(--plum); color:#fff; font-size:12px; text-transform:uppercase; letter-spacing:0.03em; padding: 10px 12px; text-align:left; }
+  .lb-table td{ padding: 10px 12px; font-weight:700; font-size:14px; border-bottom: 1px solid #f2eef8; }
+  .lb-table tr:last-child td{ border-bottom:none; }
+  .lb-rank{ color: var(--muted); width: 24px; }
+  .lb-name{ color: var(--plum); }
+  .user-card{ background:#fff; border-radius: var(--radius); box-shadow: 0 4px 20px rgba(74,33,104,0.08); margin-top:18px; overflow:hidden; }
+  .user-card summary{ list-style:none; padding: 16px 20px; font-weight:800; color: var(--plum); font-size:16px; cursor:pointer; display:flex; justify-content:space-between; align-items:center; }
+  .user-card summary::-webkit-details-marker{ display:none; }
+  .best-pin{ background:#fdf9e3; margin: 0 20px 14px; padding: 12px 14px; border-radius: 10px; font-size:13px; font-weight:700; color: var(--plum-dark); border-left: 4px solid var(--citrine-dark); }
+  .session-row{ padding: 10px 20px; border-top: 1px solid #f4f1f8; font-size: 13px; display:flex; justify-content:space-between; color: var(--ink); }
+  .session-row .nums{ color: var(--muted); font-weight:600; }
+  .empty-state{ text-align:center; color: var(--muted); font-weight:700; padding: 40px 20px; }
+
+  @media (prefers-reduced-motion: reduce){
+    *{ transition: none !important; }
+  }
+</style>
+</head>
+<body>
+
+<div id="nav" style="display:none;">
+  <div class="logo">Times<span class="x">2</span></div>
+  <div class="right">
+    <span class="who" id="nav-who"></span>
+    <button class="pill" id="nav-history">History</button>
+    <button class="pill" id="nav-switch">Switch Player</button>
+  </div>
+</div>
+
+<!-- SCREEN 1: NAME -->
+<div class="screen active" id="screen-name">
+  <div class="wrap" style="justify-content:center;">
+    <div class="card">
+      <h1 class="title-lg">Times<span class="x" style="color:var(--citrine-dark)">2</span></h1>
+      <p class="subtitle">Times tables, one square at a time.</p>
+      <input type="text" id="name-input" placeholder="Type your name" maxlength="20">
+      <button class="btn citrine" id="name-continue">Let's go →</button>
+      <div id="saved-names-block">
+        <div class="divider-text">Or pick a player</div>
+        <div class="saved-names" id="saved-names"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SCREEN 2: NUMBER PICKER -->
+<div class="screen" id="screen-numbers">
+  <div class="wrap" style="justify-content:center;">
+    <div class="card">
+      <h2 class="title-lg" style="font-size:26px;">Pick your numbers</h2>
+      <p class="subtitle">Tap any tables you want to practice</p>
+      <div class="picker-actions">
+        <button class="link-btn" id="select-all">Select all</button>
+        <button class="link-btn" id="clear-all">Clear</button>
+      </div>
+      <div class="num-grid" id="num-grid"></div>
+      <button class="btn citrine" id="start-practice-btn" disabled>Start Practice</button>
+    </div>
+  </div>
+</div>
+
+<!-- SCREEN 3: PRACTICE -->
+<div class="screen" id="screen-practice">
+  <div class="wrap" id="practice-wrap">
+    <div class="status-row">
+      <div class="status-chip" id="progress-chip">Square 0 / 0</div>
+      <div class="status-chip" id="timer-chip">0:00</div>
+    </div>
+    <div id="grid-card">
+      <div id="grid-scroll">
+        <table class="grid" id="grid-table"></table>
+      </div>
+    </div>
+    <div id="answer-area">
+      <div id="equation">— × — =</div>
+      <div id="boxes-row"></div>
+      <div class="attempts-text" id="attempts-text"></div>
+      <div id="keypad">
+        <button class="key" data-key="1">1</button>
+        <button class="key" data-key="2">2</button>
+        <button class="key" data-key="3">3</button>
+        <button class="key" data-key="4">4</button>
+        <button class="key" data-key="5">5</button>
+        <button class="key" data-key="6">6</button>
+        <button class="key" data-key="7">7</button>
+        <button class="key" data-key="8">8</button>
+        <button class="key" data-key="9">9</button>
+        <button class="key blank" tabindex="-1"></button>
+        <button class="key" data-key="0">0</button>
+        <button class="key back" data-key="back">⌫</button>
+      </div>
+    </div>
+  </div>
+  <div id="start-overlay">
+    <div class="card">
+      <h2 class="title-lg" style="font-size:24px;">Ready?</h2>
+      <p class="subtitle" id="overlay-sub">The clock starts when you tap Start.</p>
+      <button class="btn citrine" id="start-btn">Start</button>
+    </div>
+  </div>
+</div>
+
+<!-- SCREEN 4: RESULTS -->
+<div class="screen" id="screen-results">
+  <div class="wrap" style="justify-content:center;">
+    <div class="card">
+      <div class="result-label">Your time</div>
+      <div class="result-big" id="result-time">0:00</div>
+      <div class="result-msg" id="result-msg"></div>
+      <div class="result-row">
+        <div class="result-box">
+          <div class="num" id="result-accuracy">0%</div>
+          <div class="result-label">Accuracy</div>
+        </div>
+        <div class="result-box">
+          <div class="num" id="result-correct">0/0</div>
+          <div class="result-label">Correct</div>
+        </div>
+      </div>
+      <div class="result-actions">
+        <button class="btn citrine" id="again-btn">Practice Again</button>
+        <button class="btn ghost" id="new-numbers-btn">Choose New Numbers</button>
+        <button class="btn ghost" id="view-history-btn">View History</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SCREEN 5: HISTORY -->
+<div class="screen" id="screen-history">
+  <div class="wrap" id="history-wrap">
+    <h2 class="title-lg" style="font-size:26px; text-align:left;">History</h2>
+    <p class="subtitle" style="text-align:left; margin-bottom:18px;">Personal bests across every player</p>
+    <div id="leaderboard"></div>
+    <div id="user-cards"></div>
+  </div>
+</div>
+
+<script>
+/* =========================================================
+   STORAGE
+========================================================= */
+const STORE_KEY = 'times2_data';
+let memoryFallback = { users: {} };
+let storageAvailable = true;
+try{
+  const testKey = '__times2_test__';
+  localStorage.setItem(testKey, '1');
+  localStorage.removeItem(testKey);
+}catch(e){
+  storageAvailable = false;
+}
+function loadData(){
+  if(!storageAvailable) return memoryFallback;
+  try{
+    const raw = localStorage.getItem(STORE_KEY);
+    return raw ? JSON.parse(raw) : { users: {} };
+  }catch(e){
+    storageAvailable = false;
+    return memoryFallback;
+  }
+}
+function saveData(data){
+  if(!storageAvailable){ memoryFallback = data; return; }
+  try{
+    localStorage.setItem(STORE_KEY, JSON.stringify(data));
+  }catch(e){
+    storageAvailable = false;
+    memoryFallback = data;
+  }
+}
+function addSession(name, session){
+  const data = loadData();
+  if(!data.users[name]) data.users[name] = { sessions: [] };
+  data.users[name].sessions.push(session);
+  saveData(data);
+}
+
+/* =========================================================
+   APP STATE
+========================================================= */
+let currentUser = null;
+let selectedNumbers = new Set();
+let gridCells = [];       // {row, col, answer, status}
+let currentCellIndex = 0;
+let correctCount = 0;
+let totalSquares = 0;
+let startTime = null;
+let timerInterval = null;
+let currentEntry = '';        // digits typed so far for the active square
+let requiredDigits = 0;       // how many digits the current answer needs
+let currentAttempts = 0;
+
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  document.getElementById('nav').style.display = (id === 'screen-name') ? 'none' : 'flex';
+}
+
+/* ---------- NAME SCREEN ---------- */
+function renderSavedNames(){
+  const data = loadData();
+  const names = Object.keys(data.users);
+  const block = document.getElementById('saved-names-block');
+  const wrap = document.getElementById('saved-names');
+  wrap.innerHTML = '';
+  if(names.length === 0){ block.style.display = 'none'; return; }
+  block.style.display = 'block';
+  names.forEach(name=>{
+    const btn = document.createElement('button');
+    btn.className = 'name-chip';
+    btn.textContent = name;
+    btn.onclick = () => { selectUser(name); };
+    wrap.appendChild(btn);
+  });
+}
+function selectUser(name){
+  currentUser = name;
+  document.getElementById('nav-who').textContent = name;
+  document.getElementById('name-input').value = '';
+  goToNumberPicker();
+}
+document.getElementById('name-continue').onclick = () => {
+  const val = document.getElementById('name-input').value.trim();
+  if(!val) return;
+  selectUser(val);
+};
+document.getElementById('name-input').addEventListener('keydown', e=>{
+  if(e.key === 'Enter') document.getElementById('name-continue').click();
+});
+
+/* ---------- NUMBER PICKER ---------- */
+function buildNumberGrid(){
+  const grid = document.getElementById('num-grid');
+  grid.innerHTML = '';
+  selectedNumbers.clear();
+  for(let n=2;n<=12;n++){
+    const btn = document.createElement('button');
+    btn.className = 'num-btn';
+    btn.textContent = n + 's';
+    btn.dataset.n = n;
+    btn.onclick = () => {
+      if(selectedNumbers.has(n)){ selectedNumbers.delete(n); btn.classList.remove('sel'); }
+      else { selectedNumbers.add(n); btn.classList.add('sel'); }
+      updateStartButton();
+    };
+    grid.appendChild(btn);
+  }
+  updateStartButton();
+}
+function updateStartButton(){
+  document.getElementById('start-practice-btn').disabled = selectedNumbers.size === 0;
+}
+document.getElementById('select-all').onclick = () => {
+  selectedNumbers = new Set([2,3,4,5,6,7,8,9,10,11,12]);
+  document.querySelectorAll('.num-btn').forEach(b => b.classList.add('sel'));
+  updateStartButton();
+};
+document.getElementById('clear-all').onclick = () => {
+  selectedNumbers.clear();
+  document.querySelectorAll('.num-btn').forEach(b => b.classList.remove('sel'));
+  updateStartButton();
+};
+function goToNumberPicker(){
+  buildNumberGrid();
+  showScreen('screen-numbers');
+}
+document.getElementById('start-practice-btn').onclick = () => {
+  setupGrid();
+  showScreen('screen-practice');
+  document.getElementById('start-overlay').style.display = 'flex';
+  const count = selectedNumbers.size * 12;
+  document.getElementById('overlay-sub').textContent = `${count} squares · tap Start when you're ready.`;
+};
+
+/* ---------- PRACTICE SETUP ---------- */
+function shuffleArray(arr){
+  for(let i=arr.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [arr[i],arr[j]] = [arr[j],arr[i]];
+  }
+  return arr;
+}
+function setupGrid(){
+  const nums = shuffleArray(Array.from(selectedNumbers));
+  const cols = shuffleArray(Array.from({length:12}, (_,i)=>i+1));
+  gridCells = [];
+  nums.forEach(row=>{
+    cols.forEach(col=>{
+      gridCells.push({ row, col, answer: row*col, status:'blank' });
+    });
+  });
+  totalSquares = gridCells.length;
+  currentCellIndex = 0;
+  correctCount = 0;
+  currentAttempts = 0;
+  renderGridTable(nums, cols);
+  updateProgressChip();
+}
+function renderGridTable(nums, cols){
+  const table = document.getElementById('grid-table');
+  table.innerHTML = '';
+  const headRow = document.createElement('tr');
+  const corner = document.createElement('th');
+  corner.className = 'corner';
+  headRow.appendChild(corner);
+  cols.forEach(col=>{
+    const th = document.createElement('th');
+    th.textContent = col;
+    th.id = 'colhdr-' + col;
+    headRow.appendChild(th);
+  });
+  table.appendChild(headRow);
+  nums.forEach(row=>{
+    const tr = document.createElement('tr');
+    const th = document.createElement('th');
+    th.textContent = row;
+    th.id = 'rowhdr-' + row;
+    tr.appendChild(th);
+    cols.forEach(col=>{
+      const td = document.createElement('td');
+      td.className = 'cell';
+      td.id = 'cell-' + row + '-' + col;
+      td.textContent = '';
+      tr.appendChild(td);
+    });
+    table.appendChild(tr);
+  });
+}
+function updateProgressChip(){
+  document.getElementById('progress-chip').textContent = `Square ${Math.min(currentCellIndex+1,totalSquares)} / ${totalSquares}`;
+}
+
+/* ---------- TIMER ---------- */
+function startTimer(){
+  startTime = Date.now();
+  timerInterval = setInterval(()=>{
+    const elapsed = Math.floor((Date.now()-startTime)/1000);
+    document.getElementById('timer-chip').textContent = formatTime(elapsed);
+  }, 250);
+}
+function stopTimer(){
+  clearInterval(timerInterval);
+  return (Date.now()-startTime)/1000;
+}
+function formatTime(totalSeconds){
+  const m = Math.floor(totalSeconds/60);
+  const s = Math.floor(totalSeconds%60);
+  return m + ':' + String(s).padStart(2,'0');
+}
+
+document.getElementById('start-btn').onclick = () => {
+  document.getElementById('start-overlay').style.display = 'none';
+  startTimer();
+  loadCell(0);
+};
+
+/* ---------- ACTIVE CELL / ANSWER AREA ---------- */
+function loadCell(index){
+  currentCellIndex = index;
+  currentAttempts = 0;
+  updateProgressChip();
+  clearHighlights();
+  const cell = gridCells[index];
+  const cellEl = document.getElementById(`cell-${cell.row}-${cell.col}`);
+  if(cellEl) cellEl.classList.add('active-cell');
+  const rowHdr = document.getElementById('rowhdr-' + cell.row);
+  const colHdr = document.getElementById('colhdr-' + cell.col);
+  if(rowHdr) rowHdr.classList.add('active-hdr');
+  if(colHdr) colHdr.classList.add('active-hdr');
+
+  document.getElementById('equation').textContent = `${cell.row} × ${cell.col} = ?`;
+  document.getElementById('attempts-text').textContent = '';
+  document.getElementById('attempts-text').classList.remove('warn');
+  requiredDigits = String(cell.answer).length;
+  currentEntry = '';
+  renderSlots();
+}
+function clearHighlights(){
+  document.querySelectorAll('.active-cell').forEach(e=>e.classList.remove('active-cell'));
+  document.querySelectorAll('.active-hdr').forEach(e=>e.classList.remove('active-hdr'));
+}
+function renderSlots(){
+  const row = document.getElementById('boxes-row');
+  row.innerHTML = '';
+  for(let i=0;i<requiredDigits;i++){
+    const slot = document.createElement('div');
+    slot.className = 'digit-slot';
+    if(i < currentEntry.length){
+      slot.textContent = currentEntry[i];
+      slot.classList.add('filled');
+    }
+    row.appendChild(slot);
+  }
+}
+document.getElementById('keypad').addEventListener('click', (e) => {
+  const btn = e.target.closest('.key');
+  if(!btn || btn.classList.contains('blank')) return;
+  const key = btn.dataset.key;
+  if(key === 'back'){
+    currentEntry = currentEntry.slice(0, -1);
+    renderSlots();
+    return;
+  }
+  if(currentEntry.length >= requiredDigits) return;
+  currentEntry += key;
+  renderSlots();
+  if(currentEntry.length === requiredDigits){
+    handleSubmit();
+  }
+});
+
+function handleSubmit(){
+  const guess = parseInt(currentEntry, 10);
+  const cell = gridCells[currentCellIndex];
+  const t = document.getElementById('attempts-text');
+  if(guess === cell.answer){
+    markCell(cell, 'correct');
+    correctCount++;
+    t.textContent = '';
+    t.classList.remove('warn');
+    advance();
+  } else {
+    currentAttempts++;
+    if(currentAttempts >= 3){
+      markCell(cell, 'revealed');
+      t.textContent = '';
+      t.classList.remove('warn');
+      advance();
+    } else {
+      const remaining = 3 - currentAttempts;
+      t.textContent = `Try again — ${remaining} attempt${remaining>1?'s':''} left.`;
+      t.classList.add('warn');
+      currentEntry = '';
+      renderSlots();
+    }
+  }
+}
+function markCell(cell, status){
+  cell.status = status;
+  const cellEl = document.getElementById(`cell-${cell.row}-${cell.col}`);
+  cellEl.classList.remove('active-cell');
+  cellEl.classList.add(status);
+  cellEl.textContent = cell.answer;
+}
+function advance(){
+  if(currentCellIndex + 1 >= totalSquares){
+    finishSession();
+  } else {
+    loadCell(currentCellIndex + 1);
+  }
+}
+function finishSession(){
+  clearHighlights();
+  const elapsed = stopTimer();
+  const accuracy = Math.round((correctCount/totalSquares)*1000)/10;
+  addSession(currentUser, {
+    date: new Date().toISOString(),
+    numbers: Array.from(selectedNumbers).sort((a,b)=>a-b),
+    squares: totalSquares,
+    correct: correctCount,
+    time: Math.round(elapsed*10)/10,
+    accuracy: accuracy
+  });
+  document.getElementById('result-time').textContent = formatTime(Math.round(elapsed));
+  document.getElementById('result-accuracy').textContent = accuracy + '%';
+  document.getElementById('result-correct').textContent = `${correctCount}/${totalSquares}`;
+  let msg = 'Keep practicing!';
+  if(accuracy >= 95) msg = 'Outstanding! 🌟';
+  else if(accuracy >= 80) msg = 'Great job!';
+  else if(accuracy >= 60) msg = 'Nice work!';
+  document.getElementById('result-msg').textContent = msg;
+  showScreen('screen-results');
+}
+
+/* ---------- RESULTS ACTIONS ---------- */
+document.getElementById('again-btn').onclick = () => {
+  setupGrid();
+  showScreen('screen-practice');
+  document.getElementById('start-overlay').style.display = 'flex';
+  document.getElementById('overlay-sub').textContent = `${totalSquares} squares · tap Start when you're ready.`;
+};
+document.getElementById('new-numbers-btn').onclick = goToNumberPicker;
+document.getElementById('view-history-btn').onclick = () => { renderHistory(); showScreen('screen-history'); };
+
+/* ---------- NAV ACTIONS ---------- */
+document.getElementById('nav-history').onclick = () => { renderHistory(); showScreen('screen-history'); };
+document.getElementById('nav-switch').onclick = () => {
+  currentUser = null;
+  renderSavedNames();
+  showScreen('screen-name');
+};
+
+/* ---------- HISTORY ---------- */
+function renderHistory(){
+  const data = loadData();
+  const names = Object.keys(data.users);
+  const lbDiv = document.getElementById('leaderboard');
+  const cardsDiv = document.getElementById('user-cards');
+  lbDiv.innerHTML = '';
+  cardsDiv.innerHTML = '';
+
+  if(names.length === 0){
+    lbDiv.innerHTML = '<div class="empty-state">No sessions logged yet — go practice!</div>';
+    return;
+  }
+
+  const summary = names.map(name=>{
+    const sessions = data.users[name].sessions;
+    const bestTime = sessions.reduce((m,s)=> s.time < m ? s.time : m, Infinity);
+    const bestAcc = sessions.reduce((m,s)=> s.accuracy > m ? s.accuracy : m, 0);
+    return { name, bestTime, bestAcc, sessions };
+  }).sort((a,b)=> a.bestTime - b.bestTime);
+
+  let table = '<table class="lb-table"><tr><th>#</th><th>Name</th><th>Best Time</th><th>Best Accuracy</th></tr>';
+  summary.forEach((u,i)=>{
+    table += `<tr><td class="lb-rank">${i+1}</td><td class="lb-name">${escapeHtml(u.name)}</td><td>${formatTime(Math.round(u.bestTime))}</td><td>${u.bestAcc}%</td></tr>`;
+  });
+  table += '</table>';
+  lbDiv.innerHTML = table;
+
+  summary.forEach(u=>{
+    const details = document.createElement('details');
+    details.className = 'user-card';
+    const sortedSessions = [...u.sessions].sort((a,b)=> new Date(b.date) - new Date(a.date));
+    let sessionsHtml = '';
+    sortedSessions.forEach(s=>{
+      const d = new Date(s.date);
+      const dateStr = d.toLocaleDateString(undefined, {month:'short', day:'numeric'});
+      sessionsHtml += `<div class="session-row">
+        <span class="nums">${dateStr} · ${s.numbers.join(',')}s (${s.squares} sq)</span>
+        <span>${formatTime(Math.round(s.time))} · ${s.accuracy}%</span>
+      </div>`;
+    });
+    details.innerHTML = `
+      <summary>${escapeHtml(u.name)} <span style="font-size:12px;color:var(--muted);">${u.sessions.length} session${u.sessions.length>1?'s':''}</span></summary>
+      <div class="best-pin">🏆 Best: ${formatTime(Math.round(u.bestTime))} at ${u.bestAcc}% accuracy</div>
+      ${sessionsHtml}
+    `;
+    cardsDiv.appendChild(details);
+  });
+}
+function escapeHtml(str){
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+/* ---------- INIT ---------- */
+renderSavedNames();
+showScreen('screen-name');
+</script>
+</body>
+</html>
