@@ -150,7 +150,7 @@
   }
   input[type=text]:focus{ border-color: var(--plum-light); }
 
-  #saved-names-select{
+  #saved-names-select, #history-player-select{
     width:100%;
     margin-top: 14px;
     padding: 14px 16px;
@@ -162,7 +162,7 @@
     border-radius: 12px;
     font-family: inherit;
   }
-  #saved-names-select:focus{ border-color: var(--plum-light); outline:none; }
+  #saved-names-select:focus, #history-player-select:focus{ border-color: var(--plum-light); outline:none; }
   .divider-text{
     text-align:center; color: var(--muted); font-size: 13px; font-weight:700;
     margin: 22px 0 4px; text-transform: uppercase; letter-spacing: 0.04em;
@@ -328,6 +328,7 @@
   .result-box .num{ font-size: 26px; font-weight:800; color: var(--plum); }
   .result-msg{ text-align:center; font-size:17px; font-weight:700; color: var(--plum); margin-bottom: 6px; }
   .result-actions{ display:flex; flex-direction:column; gap:10px; margin-top: 10px; }
+  .result-actions.locked{ pointer-events:none; opacity:0.45; }
 
   /* ---------- HISTORY ---------- */
   #history-wrap{ max-width: 640px; width:100%; }
@@ -368,6 +369,7 @@
       <h1 class="title-lg">Times<span class="x" style="color:var(--citrine-dark)">2</span></h1>
       <p class="subtitle">Times tables, one square at a time.</p>
       <input type="text" id="name-input" placeholder="Type your name" maxlength="20">
+      <div id="name-error" style="display:none; color:var(--red-dark); font-weight:700; font-size:13px; margin:-10px 0 14px; text-align:center;">Please type your name</div>
       <button class="btn citrine" id="name-continue">Let's go →</button>
       <div id="saved-names-block">
         <div class="divider-text">Or pick a player</div>
@@ -475,6 +477,7 @@
         <button class="key" data-key="0">0</button>
         <button class="key back" data-key="back">⌫</button>
       </div>
+      <button class="link-btn" id="drill-restart-btn" style="margin-top:16px;">↻ Restart</button>
     </div>
   </div>
   <div id="drill-start-overlay" class="drill-overlay">
@@ -516,6 +519,7 @@
         <button class="btn ghost" id="new-numbers-btn">Choose New Numbers</button>
         <button class="btn ghost" id="change-mode-btn">Change Mode</button>
         <button class="btn ghost" id="view-history-btn">View History</button>
+        <button class="btn ghost" id="new-player-btn">New Player</button>
       </div>
     </div>
   </div>
@@ -527,7 +531,11 @@
     <h2 class="title-lg" style="font-size:26px; text-align:left;">History</h2>
     <p class="subtitle" style="text-align:left; margin-bottom:18px;">Personal bests across every player</p>
     <div id="leaderboard"></div>
-    <div id="user-cards"></div>
+    <div style="margin-top:26px;">
+      <div class="divider-text" style="text-align:left; margin:0 0 8px;">Player Stats</div>
+      <select id="history-player-select"></select>
+    </div>
+    <div id="user-detail"></div>
   </div>
 </div>
 
@@ -631,6 +639,8 @@ let drillTimerInterval = null;
 let drillTimeLeft = 60;
 
 function showScreen(id){
+  clearInterval(timerInterval);
+  clearInterval(drillTimerInterval);
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.getElementById(id).classList.add('active');
   document.getElementById('nav').style.display = (id === 'screen-name') ? 'none' : 'flex';
@@ -663,9 +673,17 @@ function selectUser(name){
 }
 document.getElementById('name-continue').onclick = () => {
   const val = document.getElementById('name-input').value.trim();
-  if(!val) return;
+  const errorEl = document.getElementById('name-error');
+  if(!val){
+    errorEl.style.display = 'block';
+    return;
+  }
+  errorEl.style.display = 'none';
   selectUser(val);
 };
+document.getElementById('name-input').addEventListener('input', () => {
+  document.getElementById('name-error').style.display = 'none';
+});
 document.getElementById('name-input').addEventListener('keydown', e=>{
   if(e.key === 'Enter') document.getElementById('name-continue').click();
 });
@@ -1022,8 +1040,9 @@ function handleDrillSubmit(){
     renderDrillSlots(true);
     setTimeout(()=>{
       drillLocked = false;
-      if(drillTimeLeft > 0) nextDrillFact();
-    }, 1000);
+      const stillOnDrill = document.getElementById('screen-drill').classList.contains('active');
+      if(drillTimeLeft > 0 && stillOnDrill) nextDrillFact();
+    }, 2000);
   }
 }
 function startDrillTimer(){
@@ -1040,6 +1059,11 @@ document.getElementById('drill-start-btn').onclick = () => {
   document.getElementById('drill-start-overlay').style.display = 'none';
   startDrillTimer();
   nextDrillFact();
+};
+document.getElementById('drill-restart-btn').onclick = () => {
+  clearInterval(drillTimerInterval);
+  setupDrill();
+  document.getElementById('drill-start-overlay').style.display = 'flex';
 };
 function finishDrill(){
   drillLocked = true;
@@ -1058,6 +1082,9 @@ function showResultsScreen(mode){
   document.getElementById('new-numbers-btn').style.display = mode === 'practice' ? 'block' : 'none';
   document.getElementById('again-btn').textContent = mode === 'grid' ? 'Play Again' : 'Practice Again';
   showScreen('screen-results');
+  const actions = document.querySelector('#screen-results .result-actions');
+  actions.classList.add('locked');
+  setTimeout(()=>{ actions.classList.remove('locked'); }, 3000);
 }
 document.getElementById('again-btn').onclick = () => {
   if(lastMode === 'grid'){
@@ -1076,30 +1103,35 @@ document.getElementById('again-btn').onclick = () => {
 document.getElementById('new-numbers-btn').onclick = goToNumberPicker;
 document.getElementById('change-mode-btn').onclick = goToModeSelect;
 document.getElementById('view-history-btn').onclick = () => { renderHistory(); showScreen('screen-history'); };
+document.getElementById('new-player-btn').onclick = switchPlayer;
 
 /* ---------- NAV ACTIONS ---------- */
 document.getElementById('nav-history').onclick = () => { renderHistory(); showScreen('screen-history'); };
-document.getElementById('nav-switch').onclick = () => {
+function switchPlayer(){
   currentUser = null;
   renderSavedNames();
   showScreen('screen-name');
-};
+}
+document.getElementById('nav-switch').onclick = switchPlayer;
 
 /* ---------- HISTORY ---------- */
+let historySummary = [];
 function renderHistory(){
   const data = loadData();
   const names = Object.keys(data.users);
   const lbDiv = document.getElementById('leaderboard');
-  const cardsDiv = document.getElementById('user-cards');
+  const select = document.getElementById('history-player-select');
+  const detailDiv = document.getElementById('user-detail');
   lbDiv.innerHTML = '';
-  cardsDiv.innerHTML = '';
+  select.innerHTML = '';
+  detailDiv.innerHTML = '';
 
   if(names.length === 0){
     lbDiv.innerHTML = '<div class="empty-state">No sessions logged yet — go play!</div>';
     return;
   }
 
-  const summary = names.map(name=>{
+  historySummary = names.map(name=>{
     ensureUser(data, name);
     const u = data.users[name];
     const gridSessions = u.gridSessions;
@@ -1109,7 +1141,7 @@ function renderHistory(){
     return { name, bestTime, bestAcc, gridSessions, practice };
   });
 
-  const gridRanked = summary.filter(u => u.bestTime !== null).sort((a,b)=> a.bestTime - b.bestTime);
+  const gridRanked = historySummary.filter(u => u.bestTime !== null).sort((a,b)=> a.bestTime - b.bestTime);
   let table;
   if(gridRanked.length){
     table = '<table class="lb-table"><tr><th>#</th><th>Name</th><th>Best Time</th><th>Best Accuracy</th></tr>';
@@ -1122,39 +1154,56 @@ function renderHistory(){
   }
   lbDiv.innerHTML = '<h3 style="color:var(--plum); margin:0 0 10px;">🔢 Grid Mode Leaderboard</h3>' + table;
 
-  cardsDiv.innerHTML = '<h3 style="color:var(--plum); margin:26px 0 10px;">Player Stats</h3>';
-  summary.forEach(u=>{
-    const details = document.createElement('details');
-    details.className = 'user-card';
-
-    let gridHtml = '';
-    if(u.gridSessions.length){
-      const sorted = [...u.gridSessions].sort((a,b)=> new Date(b.date) - new Date(a.date));
-      gridHtml += `<div class="best-pin">🏆 Grid Mode best: ${formatTime(Math.round(u.bestTime))} at ${u.bestAcc}% accuracy</div>`;
-      sorted.slice(0,5).forEach(s=>{
-        const d = new Date(s.date);
-        const dateStr = d.toLocaleDateString(undefined, {month:'short', day:'numeric'});
-        gridHtml += `<div class="session-row"><span class="nums">${dateStr} · Grid Mode</span><span>${formatTime(Math.round(s.time))} · ${s.accuracy}%</span></div>`;
-      });
-    }
-
-    let practiceHtml = '';
-    const combos = Object.values(u.practice).sort((a,b)=> b.bestCorrect - a.bestCorrect);
-    if(combos.length){
-      practiceHtml += `<div style="padding:14px 20px 4px; font-weight:800; color:var(--plum); font-size:12px; text-transform:uppercase; letter-spacing:0.03em;">⚡ Practice Mode bests</div>`;
-      combos.forEach(c=>{
-        practiceHtml += `<div class="session-row"><span class="nums">${formatNumbersLabel(c.numbers)}</span><span>${c.bestCorrect} correct (best)</span></div>`;
-      });
-    }
-
-    if(!gridHtml && !practiceHtml){
-      gridHtml = '<div class="session-row"><span class="nums">No sessions yet</span></div>';
-    }
-
-    details.innerHTML = `<summary>${escapeHtml(u.name)}</summary>${gridHtml}${practiceHtml}`;
-    cardsDiv.appendChild(details);
+  historySummary.forEach(u=>{
+    const opt = document.createElement('option');
+    opt.value = u.name;
+    opt.textContent = u.name;
+    select.appendChild(opt);
   });
+
+  const preselect = (currentUser && names.includes(currentUser)) ? currentUser : names[0];
+  select.value = preselect;
+  renderPlayerDetail(preselect);
 }
+function renderPlayerDetail(name){
+  const detailDiv = document.getElementById('user-detail');
+  const u = historySummary.find(x => x.name === name);
+  if(!u){ detailDiv.innerHTML = ''; return; }
+
+  let gridHtml = '';
+  if(u.gridSessions.length){
+    const sorted = [...u.gridSessions].sort((a,b)=> new Date(b.date) - new Date(a.date));
+    gridHtml += `<div class="best-pin">🏆 Grid Mode best: ${formatTime(Math.round(u.bestTime))} at ${u.bestAcc}% accuracy</div>`;
+    sorted.slice(0,5).forEach(s=>{
+      const d = new Date(s.date);
+      const dateStr = d.toLocaleDateString(undefined, {month:'short', day:'numeric'});
+      gridHtml += `<div class="session-row"><span class="nums">${dateStr} · Grid Mode</span><span>${formatTime(Math.round(s.time))} · ${s.accuracy}%</span></div>`;
+    });
+  }
+
+  let practiceHtml = '';
+  const combos = Object.values(u.practice).sort((a,b)=> b.bestCorrect - a.bestCorrect);
+  if(combos.length){
+    practiceHtml += `<div style="padding:14px 20px 4px; font-weight:800; color:var(--plum); font-size:12px; text-transform:uppercase; letter-spacing:0.03em;">⚡ Practice Mode bests</div>`;
+    combos.forEach(c=>{
+      practiceHtml += `<div class="session-row"><span class="nums">${formatNumbersLabel(c.numbers)}</span><span>${c.bestCorrect} correct (best)</span></div>`;
+    });
+  }
+
+  if(!gridHtml && !practiceHtml){
+    gridHtml = '<div class="session-row"><span class="nums">No sessions yet</span></div>';
+  }
+
+  const card = document.createElement('div');
+  card.className = 'user-card';
+  card.style.marginTop = '14px';
+  card.innerHTML = gridHtml + practiceHtml;
+  detailDiv.innerHTML = '';
+  detailDiv.appendChild(card);
+}
+document.getElementById('history-player-select').addEventListener('change', (e)=>{
+  renderPlayerDetail(e.target.value);
+});
 function escapeHtml(str){
   const div = document.createElement('div');
   div.textContent = str;
