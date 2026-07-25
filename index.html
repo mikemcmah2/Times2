@@ -246,6 +246,7 @@
   }
   table.grid td.cell.correct{ background: var(--green); color:#fff; }
   table.grid td.cell.revealed{ background: var(--red); color:#fff; }
+  table.grid td.cell.wrong-flash{ background: var(--red); color:#fff; font-weight:800; }
 
   #answer-area{
     margin-top: 18px;
@@ -281,7 +282,7 @@
     font-size: 15px; font-weight:800; color: var(--muted); margin-bottom: 14px; min-height: 20px;
   }
   .attempts-text.warn{ color: var(--red-dark); }
-  #keypad{
+  #keypad, #drill-keypad{
     display:grid;
     grid-template-columns: repeat(3, 1fr);
     column-gap: 20px;
@@ -890,6 +891,13 @@ function handleSubmit(){
       t.classList.add('warn');
       currentEntry = '';
       renderSlots();
+      const cellEl = document.getElementById(`cell-${cell.row}-${cell.col}`);
+      cellEl.classList.remove('active-cell');
+      cellEl.classList.add('wrong-flash');
+      setTimeout(()=>{
+        cellEl.classList.remove('wrong-flash');
+        cellEl.classList.add('active-cell');
+      }, 500);
     }
   }
 }
