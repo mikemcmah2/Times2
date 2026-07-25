@@ -12,12 +12,12 @@ A times-table practice app with two modes: **Grid Mode** (fill the full 1-12 gri
 
 ## How it works
 
-- **Name entry**: type a new name (required — you'll get an error if you try to continue blank), or pick a returning player from the dropdown.
+- **Name entry**: type a new name (required), or pick a returning player from the dropdown.
 - **Mode select**: choose Grid Mode or Practice Mode each time you play.
-- **Grid Mode**: full 1-12 × 1-12 grid (144 squares), shuffled each round. A wrong attempt flashes the square red immediately, then lets you try again (3 attempts total); after 3 misses the answer is revealed in red. Best time + accuracy tracked per player on a leaderboard.
-- **Practice Mode**: pick any combination of tables. One fact at a time, 1-minute timer. Correct answers advance instantly; wrong answers flash the right answer in red for 2 seconds before moving on. A **Restart** link lets you reset the round anytime. Leaving the page mid-round properly stops the timer. Best "correct in 1 minute" tracked per player per number combination.
-- **Results screen**: buttons are briefly disabled for 3 seconds after finishing, to avoid an accidental tap-through into a new round right as the timer expires. Includes a **New Player** button to hand the device to someone else.
-- **History**: a Grid Mode leaderboard at the top, plus a dropdown to pick any player and see their best times/scores.
+- **Grid Mode**: full 1-12 × 1-12 grid (144 squares), shuffled each round. A wrong attempt flashes red immediately, then lets you try again (3 attempts total); after 3 misses the answer is revealed in red. Best time + accuracy tracked per player on a leaderboard.
+- **Practice Mode**: pick any combination of tables. One fact at a time, 1-minute timer. Correct answers advance instantly; wrong answers flash red for 2 seconds before moving on. A Restart link resets the round anytime. Leaving the page mid-round stops the timer. Best "correct in 1 minute" tracked per player per number combination.
+- **Results screen**: buttons are briefly disabled for 3 seconds after finishing. Includes a New Player button.
+- **History**: Grid Mode and Practice Mode quick-jump buttons at the top, a Grid Mode leaderboard, and a player dropdown to see individual stats.
 
 ## App icon
 

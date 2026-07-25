@@ -529,7 +529,11 @@
 <div class="screen" id="screen-history">
   <div class="wrap" id="history-wrap">
     <h2 class="title-lg" style="font-size:26px; text-align:left;">History</h2>
-    <p class="subtitle" style="text-align:left; margin-bottom:18px;">Personal bests across every player</p>
+    <p class="subtitle" style="text-align:left; margin-bottom:16px;">Personal bests across every player</p>
+    <div style="display:flex; gap:10px; margin-bottom:22px;">
+      <button class="btn citrine" id="history-grid-btn" style="flex:1;">🔢 Grid Mode</button>
+      <button class="btn ghost" id="history-practice-btn" style="flex:1;">⚡ Practice Mode</button>
+    </div>
     <div id="leaderboard"></div>
     <div style="margin-top:26px;">
       <div class="divider-text" style="text-align:left; margin:0 0 8px;">Player Stats</div>
@@ -692,17 +696,21 @@ document.getElementById('name-input').addEventListener('keydown', e=>{
 function goToModeSelect(){
   showScreen('screen-mode');
 }
-document.getElementById('mode-grid-btn').onclick = () => {
+function startGridMode(){
   appMode = 'grid';
   setupGrid();
   showScreen('screen-practice');
   document.getElementById('start-overlay').style.display = 'flex';
   document.getElementById('overlay-sub').textContent = `144 squares · tap Start when you're ready.`;
-};
-document.getElementById('mode-practice-btn').onclick = () => {
+}
+function startPracticeMode(){
   appMode = 'practice';
   goToNumberPicker();
-};
+}
+document.getElementById('mode-grid-btn').onclick = startGridMode;
+document.getElementById('mode-practice-btn').onclick = startPracticeMode;
+document.getElementById('history-grid-btn').onclick = startGridMode;
+document.getElementById('history-practice-btn').onclick = startPracticeMode;
 document.getElementById('numbers-back').onclick = goToModeSelect;
 
 /* ---------- NUMBER PICKER (Practice Mode) ---------- */
