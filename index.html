@@ -4,11 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Times2</title>
-<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
-<link rel="icon" type="image/png" sizes="16x16" href="icons/favicon-16.png">
-<link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon.png">
-<link rel="apple-touch-icon" sizes="167x167" href="icons/apple-touch-icon-167.png">
-<link rel="apple-touch-icon" sizes="152x152" href="icons/apple-touch-icon-152.png">
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="favicon-16.png">
+<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+<link rel="apple-touch-icon" sizes="167x167" href="apple-touch-icon-167.png">
+<link rel="apple-touch-icon" sizes="152x152" href="apple-touch-icon-152.png">
 <link rel="manifest" href="manifest.json">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -45,7 +45,7 @@
     font-family: 'Fredoka', 'Nunito', sans-serif;
   }
   button{ font-family: inherit; cursor:pointer; }
-  .screen{ display:none; min-height:100vh; flex-direction:column; }
+  .screen{ display:none; min-height:100vh; flex-direction:column; align-items:center; }
   .screen.active{ display:flex; }
 
   /* ---------- NAV ---------- */
@@ -150,19 +150,19 @@
   }
   input[type=text]:focus{ border-color: var(--plum-light); }
 
-  .saved-names{
-    display:flex; flex-wrap:wrap; gap:8px; justify-content:center; margin-top: 18px;
-  }
-  .name-chip{
-    padding: 9px 16px;
-    border-radius: 999px;
-    background: #f2eef8;
-    border: none;
-    color: var(--plum);
+  #saved-names-select{
+    width:100%;
+    margin-top: 14px;
+    padding: 14px 16px;
+    font-size: 16px;
     font-weight: 700;
-    font-size: 14px;
+    color: var(--plum);
+    background: #f2eef8;
+    border: 2px solid transparent;
+    border-radius: 12px;
+    font-family: inherit;
   }
-  .name-chip:active{ background:#e5dcf2; }
+  #saved-names-select:focus{ border-color: var(--plum-light); outline:none; }
   .divider-text{
     text-align:center; color: var(--muted); font-size: 13px; font-weight:700;
     margin: 22px 0 4px; text-transform: uppercase; letter-spacing: 0.04em;
@@ -309,12 +309,12 @@
   .key.back{ background: #f7e4e4; color: var(--red-dark); font-size: 24px; }
   .key.back:active{ background: #f0d0d0; }
 
-  #start-overlay{
+  #start-overlay, .drill-overlay{
     position: fixed; inset:0; background: rgba(42,26,56,0.55);
     display:flex; align-items:center; justify-content:center; z-index: 40;
     padding: 20px;
   }
-  #start-overlay .card{ text-align:center; }
+  #start-overlay .card, .drill-overlay .card{ text-align:center; }
 
   /* ---------- RESULTS ---------- */
   .result-big{
@@ -370,24 +370,41 @@
       <button class="btn citrine" id="name-continue">Let's go →</button>
       <div id="saved-names-block">
         <div class="divider-text">Or pick a player</div>
-        <div class="saved-names" id="saved-names"></div>
+        <select id="saved-names-select">
+          <option value="" disabled selected>Choose a player...</option>
+        </select>
       </div>
     </div>
   </div>
 </div>
 
-<!-- SCREEN 2: NUMBER PICKER -->
+<!-- SCREEN 1.5: MODE SELECT -->
+<div class="screen" id="screen-mode">
+  <div class="wrap" style="justify-content:center;">
+    <div class="card">
+      <h2 class="title-lg" style="font-size:26px;">Choose a mode</h2>
+      <p class="subtitle">How do you want to practice?</p>
+      <button class="btn citrine" id="mode-grid-btn" style="margin-bottom:6px;">🔢 Grid Mode</button>
+      <p style="text-align:center;color:var(--muted);font-size:13px;margin:0 0 20px;">Fill the full 1–12 grid. Beat your best time.</p>
+      <button class="btn ghost" id="mode-practice-btn" style="margin-bottom:6px;">⚡ Practice Mode</button>
+      <p style="text-align:center;color:var(--muted);font-size:13px;margin:0;">Pick your numbers. Answer as many facts as you can in 1 minute.</p>
+    </div>
+  </div>
+</div>
+
+<!-- SCREEN 2: NUMBER PICKER (Practice Mode only) -->
 <div class="screen" id="screen-numbers">
   <div class="wrap" style="justify-content:center;">
     <div class="card">
+      <button class="link-btn" id="numbers-back" style="display:block;margin-bottom:14px;">← Change Mode</button>
       <h2 class="title-lg" style="font-size:26px;">Pick your numbers</h2>
-      <p class="subtitle">Tap any tables you want to practice</p>
+      <p class="subtitle">Choose which tables to drill</p>
       <div class="picker-actions">
         <button class="link-btn" id="select-all">Select all</button>
         <button class="link-btn" id="clear-all">Clear</button>
       </div>
       <div class="num-grid" id="num-grid"></div>
-      <button class="btn citrine" id="start-practice-btn" disabled>Start Practice</button>
+      <button class="btn citrine" id="start-practice-btn" disabled>Start Drill</button>
     </div>
   </div>
 </div>
@@ -433,26 +450,70 @@
   </div>
 </div>
 
+<!-- SCREEN 3.5: DRILL (Practice Mode) -->
+<div class="screen" id="screen-drill">
+  <div class="wrap" style="justify-content:center;">
+    <div style="display:flex; justify-content:space-between; width:100%; max-width:420px; margin-bottom:14px;">
+      <div class="status-chip" id="drill-label-chip">2s</div>
+      <div class="status-chip" id="drill-timer-chip">1:00</div>
+    </div>
+    <div class="card" style="text-align:center; max-width:420px;">
+      <div id="drill-equation" style="font-size:38px; font-weight:700; color:var(--plum); margin-bottom:18px; font-family:'Fredoka',sans-serif;">— × — = ?</div>
+      <div id="drill-boxes-row" style="display:flex; justify-content:center; gap:10px; margin-bottom:18px; flex-wrap:wrap;"></div>
+      <div id="drill-keypad">
+        <button class="key" data-key="1">1</button>
+        <button class="key" data-key="2">2</button>
+        <button class="key" data-key="3">3</button>
+        <button class="key" data-key="4">4</button>
+        <button class="key" data-key="5">5</button>
+        <button class="key" data-key="6">6</button>
+        <button class="key" data-key="7">7</button>
+        <button class="key" data-key="8">8</button>
+        <button class="key" data-key="9">9</button>
+        <button class="key blank" tabindex="-1"></button>
+        <button class="key" data-key="0">0</button>
+        <button class="key back" data-key="back">⌫</button>
+      </div>
+    </div>
+  </div>
+  <div id="drill-start-overlay" class="drill-overlay">
+    <div class="card">
+      <h2 class="title-lg" style="font-size:24px;">Ready?</h2>
+      <p class="subtitle" id="drill-overlay-sub">1 minute. Answer as many as you can.</p>
+      <button class="btn citrine" id="drill-start-btn">Start</button>
+    </div>
+  </div>
+</div>
+
 <!-- SCREEN 4: RESULTS -->
 <div class="screen" id="screen-results">
   <div class="wrap" style="justify-content:center;">
     <div class="card">
-      <div class="result-label">Your time</div>
-      <div class="result-big" id="result-time">0:00</div>
-      <div class="result-msg" id="result-msg"></div>
-      <div class="result-row">
-        <div class="result-box">
-          <div class="num" id="result-accuracy">0%</div>
-          <div class="result-label">Accuracy</div>
-        </div>
-        <div class="result-box">
-          <div class="num" id="result-correct">0/0</div>
-          <div class="result-label">Correct</div>
+      <div id="grid-result-block">
+        <div class="result-label">Your time</div>
+        <div class="result-big" id="result-time">0:00</div>
+        <div class="result-msg" id="result-msg"></div>
+        <div class="result-row">
+          <div class="result-box">
+            <div class="num" id="result-accuracy">0%</div>
+            <div class="result-label">Accuracy</div>
+          </div>
+          <div class="result-box">
+            <div class="num" id="result-correct">0/0</div>
+            <div class="result-label">Correct</div>
+          </div>
         </div>
       </div>
+      <div id="practice-result-block" style="display:none;">
+        <div class="result-label" id="practice-result-label">2s</div>
+        <div class="result-big" id="practice-result-correct">0</div>
+        <div class="result-msg">correct in 1 minute</div>
+        <div class="result-msg" id="practice-best-badge" style="color:var(--citrine-dark); min-height:22px;"></div>
+      </div>
       <div class="result-actions">
-        <button class="btn citrine" id="again-btn">Practice Again</button>
+        <button class="btn citrine" id="again-btn">Play Again</button>
         <button class="btn ghost" id="new-numbers-btn">Choose New Numbers</button>
+        <button class="btn ghost" id="change-mode-btn">Change Mode</button>
         <button class="btn ghost" id="view-history-btn">View History</button>
       </div>
     </div>
@@ -502,17 +563,49 @@ function saveData(data){
     memoryFallback = data;
   }
 }
-function addSession(name, session){
-  const data = loadData();
-  if(!data.users[name]) data.users[name] = { sessions: [] };
-  data.users[name].sessions.push(session);
+function migrateUser(u){
+  if(!u.gridSessions) u.gridSessions = u.sessions || [];
+  if(!u.practice) u.practice = {};
+  return u;
+}
+function ensureUser(data, name){
+  if(!data.users[name]) data.users[name] = { gridSessions: [], practice: {} };
+  data.users[name] = migrateUser(data.users[name]);
+  return data;
+}
+function addGridSession(name, session){
+  let data = loadData();
+  data = ensureUser(data, name);
+  data.users[name].gridSessions.push(session);
   saveData(data);
+}
+function recordPracticeResult(name, numbersArr, correct, total){
+  let data = loadData();
+  data = ensureUser(data, name);
+  const sortedNums = numbersArr.slice().sort((a,b)=>a-b);
+  const key = sortedNums.join(',');
+  const existing = data.users[name].practice[key] || { numbers: sortedNums, bestCorrect: 0, timesPlayed: 0, lastPlayed: null };
+  existing.timesPlayed++;
+  existing.lastPlayed = new Date().toISOString();
+  const isNewBest = correct > existing.bestCorrect;
+  if(isNewBest) existing.bestCorrect = correct;
+  data.users[name].practice[key] = existing;
+  saveData(data);
+  return isNewBest;
+}
+function formatNumbersLabel(numbers){
+  const labels = numbers.map(n => n + 's');
+  if(labels.length === 1) return labels[0];
+  if(labels.length === 2) return labels[0] + ' & ' + labels[1];
+  return labels.slice(0,-1).join(', ') + ' & ' + labels[labels.length-1];
 }
 
 /* =========================================================
    APP STATE
 ========================================================= */
 let currentUser = null;
+let appMode = 'grid'; // 'grid' | 'practice'
+let lastMode = 'grid'; // mode that produced the current results screen
 let selectedNumbers = new Set();
 let gridCells = [];       // {row, col, answer, status}
 let currentCellIndex = 0;
@@ -523,6 +616,18 @@ let timerInterval = null;
 let currentEntry = '';        // digits typed so far for the active square
 let requiredDigits = 0;       // how many digits the current answer needs
 let currentAttempts = 0;
+
+// Drill (Practice Mode) state
+let drillNumbers = [];
+let drillBag = [];
+let drillCorrect = 0;
+let drillTotal = 0;
+let drillCurrentFact = null;
+let drillEntry = '';
+let drillRequired = 0;
+let drillLocked = false;
+let drillTimerInterval = null;
+let drillTimeLeft = 60;
 
 function showScreen(id){
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
@@ -535,23 +640,25 @@ function renderSavedNames(){
   const data = loadData();
   const names = Object.keys(data.users);
   const block = document.getElementById('saved-names-block');
-  const wrap = document.getElementById('saved-names');
-  wrap.innerHTML = '';
+  const select = document.getElementById('saved-names-select');
+  select.innerHTML = '<option value="" disabled selected>Choose a player...</option>';
   if(names.length === 0){ block.style.display = 'none'; return; }
   block.style.display = 'block';
   names.forEach(name=>{
-    const btn = document.createElement('button');
-    btn.className = 'name-chip';
-    btn.textContent = name;
-    btn.onclick = () => { selectUser(name); };
-    wrap.appendChild(btn);
+    const opt = document.createElement('option');
+    opt.value = name;
+    opt.textContent = name;
+    select.appendChild(opt);
   });
 }
+document.getElementById('saved-names-select').addEventListener('change', (e) => {
+  if(e.target.value) selectUser(e.target.value);
+});
 function selectUser(name){
   currentUser = name;
   document.getElementById('nav-who').textContent = name;
   document.getElementById('name-input').value = '';
-  goToNumberPicker();
+  goToModeSelect();
 }
 document.getElementById('name-continue').onclick = () => {
   const val = document.getElementById('name-input').value.trim();
@@ -562,7 +669,24 @@ document.getElementById('name-input').addEventListener('keydown', e=>{
   if(e.key === 'Enter') document.getElementById('name-continue').click();
 });
 
-/* ---------- NUMBER PICKER ---------- */
+/* ---------- MODE SELECT ---------- */
+function goToModeSelect(){
+  showScreen('screen-mode');
+}
+document.getElementById('mode-grid-btn').onclick = () => {
+  appMode = 'grid';
+  setupGrid();
+  showScreen('screen-practice');
+  document.getElementById('start-overlay').style.display = 'flex';
+  document.getElementById('overlay-sub').textContent = `144 squares · tap Start when you're ready.`;
+};
+document.getElementById('mode-practice-btn').onclick = () => {
+  appMode = 'practice';
+  goToNumberPicker();
+};
+document.getElementById('numbers-back').onclick = goToModeSelect;
+
+/* ---------- NUMBER PICKER (Practice Mode) ---------- */
 function buildNumberGrid(){
   const grid = document.getElementById('num-grid');
   grid.innerHTML = '';
@@ -599,14 +723,14 @@ function goToNumberPicker(){
   showScreen('screen-numbers');
 }
 document.getElementById('start-practice-btn').onclick = () => {
-  setupGrid();
-  showScreen('screen-practice');
-  document.getElementById('start-overlay').style.display = 'flex';
-  const count = selectedNumbers.size * 12;
-  document.getElementById('overlay-sub').textContent = `${count} squares · tap Start when you're ready.`;
+  setupDrill();
+  showScreen('screen-drill');
+  document.getElementById('drill-start-overlay').style.display = 'flex';
+  document.getElementById('drill-label-chip').textContent = formatNumbersLabel(drillNumbers);
+  document.getElementById('drill-overlay-sub').textContent = `1 minute · ${formatNumbersLabel(drillNumbers)} · answer as many as you can.`;
 };
 
-/* ---------- PRACTICE SETUP ---------- */
+/* ---------- GRID MODE SETUP ---------- */
 function shuffleArray(arr){
   for(let i=arr.length-1;i>0;i--){
     const j = Math.floor(Math.random()*(i+1));
@@ -615,7 +739,7 @@ function shuffleArray(arr){
   return arr;
 }
 function setupGrid(){
-  const nums = shuffleArray(Array.from(selectedNumbers));
+  const nums = shuffleArray(Array.from({length:12}, (_,i)=>i+1));
   const cols = shuffleArray(Array.from({length:12}, (_,i)=>i+1));
   gridCells = [];
   nums.forEach(row=>{
@@ -787,9 +911,8 @@ function finishSession(){
   clearHighlights();
   const elapsed = stopTimer();
   const accuracy = Math.round((correctCount/totalSquares)*1000)/10;
-  addSession(currentUser, {
+  addGridSession(currentUser, {
     date: new Date().toISOString(),
-    numbers: Array.from(selectedNumbers).sort((a,b)=>a-b),
     squares: totalSquares,
     correct: correctCount,
     time: Math.round(elapsed*10)/10,
@@ -803,17 +926,147 @@ function finishSession(){
   else if(accuracy >= 80) msg = 'Great job!';
   else if(accuracy >= 60) msg = 'Nice work!';
   document.getElementById('result-msg').textContent = msg;
-  showScreen('screen-results');
+  showResultsScreen('grid');
 }
 
-/* ---------- RESULTS ACTIONS ---------- */
+/* =========================================================
+   DRILL (PRACTICE MODE) — one fact at a time, 1-minute timer
+========================================================= */
+function buildDrillBag(numbers){
+  const bag = [];
+  numbers.forEach(a=>{
+    for(let b=1;b<=12;b++){
+      bag.push({ a, b });
+    }
+  });
+  return shuffleArray(bag);
+}
+function setupDrill(){
+  drillNumbers = Array.from(selectedNumbers).sort((a,b)=>a-b);
+  drillBag = buildDrillBag(drillNumbers);
+  drillCorrect = 0;
+  drillTotal = 0;
+  drillLocked = false;
+  drillTimeLeft = 60;
+  document.getElementById('drill-timer-chip').textContent = formatTime(drillTimeLeft);
+  document.getElementById('drill-equation').textContent = '— × — = ?';
+  document.getElementById('drill-boxes-row').innerHTML = '';
+}
+function nextDrillFact(){
+  if(drillBag.length === 0){
+    const prev = drillCurrentFact;
+    drillBag = buildDrillBag(drillNumbers);
+    if(prev && drillBag.length > 1 && drillBag[drillBag.length-1].a === prev.a && drillBag[drillBag.length-1].b === prev.b){
+      [drillBag[drillBag.length-1], drillBag[0]] = [drillBag[0], drillBag[drillBag.length-1]];
+    }
+  }
+  drillCurrentFact = drillBag.pop();
+  drillEntry = '';
+  drillRequired = String(drillCurrentFact.a * drillCurrentFact.b).length;
+  document.getElementById('drill-equation').textContent = `${drillCurrentFact.a} × ${drillCurrentFact.b} = ?`;
+  renderDrillSlots(false);
+}
+function renderDrillSlots(showWrong){
+  const row = document.getElementById('drill-boxes-row');
+  row.innerHTML = '';
+  const answerStr = drillCurrentFact ? String(drillCurrentFact.a * drillCurrentFact.b) : '';
+  for(let i=0;i<drillRequired;i++){
+    const slot = document.createElement('div');
+    slot.className = 'digit-slot';
+    if(showWrong){
+      slot.textContent = answerStr[i];
+      slot.style.borderColor = 'var(--red-dark)';
+      slot.style.background = '#fbeaea';
+      slot.style.color = 'var(--red-dark)';
+    } else if(i < drillEntry.length){
+      slot.textContent = drillEntry[i];
+      slot.classList.add('filled');
+    }
+    row.appendChild(slot);
+  }
+}
+document.getElementById('drill-keypad').addEventListener('click', (e) => {
+  if(drillLocked) return;
+  const btn = e.target.closest('.key');
+  if(!btn || btn.classList.contains('blank')) return;
+  const key = btn.dataset.key;
+  if(key === 'back'){
+    drillEntry = drillEntry.slice(0, -1);
+    renderDrillSlots(false);
+    return;
+  }
+  if(drillEntry.length >= drillRequired) return;
+  drillEntry += key;
+  renderDrillSlots(false);
+  if(drillEntry.length === drillRequired){
+    handleDrillSubmit();
+  }
+});
+function handleDrillSubmit(){
+  const guess = parseInt(drillEntry, 10);
+  const answer = drillCurrentFact.a * drillCurrentFact.b;
+  drillTotal++;
+  if(guess === answer){
+    drillCorrect++;
+    nextDrillFact();
+  } else {
+    drillLocked = true;
+    renderDrillSlots(true);
+    setTimeout(()=>{
+      drillLocked = false;
+      if(drillTimeLeft > 0) nextDrillFact();
+    }, 1000);
+  }
+}
+function startDrillTimer(){
+  drillTimerInterval = setInterval(()=>{
+    drillTimeLeft--;
+    document.getElementById('drill-timer-chip').textContent = formatTime(Math.max(0,drillTimeLeft));
+    if(drillTimeLeft <= 0){
+      clearInterval(drillTimerInterval);
+      finishDrill();
+    }
+  }, 1000);
+}
+document.getElementById('drill-start-btn').onclick = () => {
+  document.getElementById('drill-start-overlay').style.display = 'none';
+  startDrillTimer();
+  nextDrillFact();
+};
+function finishDrill(){
+  drillLocked = true;
+  const isNewBest = recordPracticeResult(currentUser, drillNumbers, drillCorrect, drillTotal);
+  document.getElementById('practice-result-label').textContent = formatNumbersLabel(drillNumbers);
+  document.getElementById('practice-result-correct').textContent = drillCorrect;
+  document.getElementById('practice-best-badge').textContent = isNewBest ? '🌟 New personal best!' : '';
+  showResultsScreen('practice');
+}
+
+/* ---------- RESULTS ---------- */
+function showResultsScreen(mode){
+  lastMode = mode;
+  document.getElementById('grid-result-block').style.display = mode === 'grid' ? 'block' : 'none';
+  document.getElementById('practice-result-block').style.display = mode === 'practice' ? 'block' : 'none';
+  document.getElementById('new-numbers-btn').style.display = mode === 'practice' ? 'block' : 'none';
+  document.getElementById('again-btn').textContent = mode === 'grid' ? 'Play Again' : 'Practice Again';
+  showScreen('screen-results');
+}
 document.getElementById('again-btn').onclick = () => {
-  setupGrid();
-  showScreen('screen-practice');
-  document.getElementById('start-overlay').style.display = 'flex';
-  document.getElementById('overlay-sub').textContent = `${totalSquares} squares · tap Start when you're ready.`;
+  if(lastMode === 'grid'){
+    setupGrid();
+    showScreen('screen-practice');
+    document.getElementById('start-overlay').style.display = 'flex';
+    document.getElementById('overlay-sub').textContent = `144 squares · tap Start when you're ready.`;
+  } else {
+    setupDrill();
+    showScreen('screen-drill');
+    document.getElementById('drill-start-overlay').style.display = 'flex';
+    document.getElementById('drill-label-chip').textContent = formatNumbersLabel(drillNumbers);
+    document.getElementById('drill-overlay-sub').textContent = `1 minute · ${formatNumbersLabel(drillNumbers)} · answer as many as you can.`;
+  }
 };
 document.getElementById('new-numbers-btn').onclick = goToNumberPicker;
+document.getElementById('change-mode-btn').onclick = goToModeSelect;
 document.getElementById('view-history-btn').onclick = () => { renderHistory(); showScreen('screen-history'); };
 
 /* ---------- NAV ACTIONS ---------- */
@@ -834,42 +1087,63 @@ function renderHistory(){
   cardsDiv.innerHTML = '';
 
   if(names.length === 0){
-    lbDiv.innerHTML = '<div class="empty-state">No sessions logged yet — go practice!</div>';
+    lbDiv.innerHTML = '<div class="empty-state">No sessions logged yet — go play!</div>';
     return;
   }
 
   const summary = names.map(name=>{
-    const sessions = data.users[name].sessions;
-    const bestTime = sessions.reduce((m,s)=> s.time < m ? s.time : m, Infinity);
-    const bestAcc = sessions.reduce((m,s)=> s.accuracy > m ? s.accuracy : m, 0);
-    return { name, bestTime, bestAcc, sessions };
-  }).sort((a,b)=> a.bestTime - b.bestTime);
-
-  let table = '<table class="lb-table"><tr><th>#</th><th>Name</th><th>Best Time</th><th>Best Accuracy</th></tr>';
-  summary.forEach((u,i)=>{
-    table += `<tr><td class="lb-rank">${i+1}</td><td class="lb-name">${escapeHtml(u.name)}</td><td>${formatTime(Math.round(u.bestTime))}</td><td>${u.bestAcc}%</td></tr>`;
+    ensureUser(data, name);
+    const u = data.users[name];
+    const gridSessions = u.gridSessions;
+    const practice = u.practice;
+    const bestTime = gridSessions.length ? gridSessions.reduce((m,s)=> s.time < m ? s.time : m, Infinity) : null;
+    const bestAcc = gridSessions.length ? gridSessions.reduce((m,s)=> s.accuracy > m ? s.accuracy : m, 0) : null;
+    return { name, bestTime, bestAcc, gridSessions, practice };
   });
-  table += '</table>';
-  lbDiv.innerHTML = table;
 
+  const gridRanked = summary.filter(u => u.bestTime !== null).sort((a,b)=> a.bestTime - b.bestTime);
+  let table;
+  if(gridRanked.length){
+    table = '<table class="lb-table"><tr><th>#</th><th>Name</th><th>Best Time</th><th>Best Accuracy</th></tr>';
+    gridRanked.forEach((u,i)=>{
+      table += `<tr><td class="lb-rank">${i+1}</td><td class="lb-name">${escapeHtml(u.name)}</td><td>${formatTime(Math.round(u.bestTime))}</td><td>${u.bestAcc}%</td></tr>`;
+    });
+    table += '</table>';
+  } else {
+    table = '<div class="empty-state">No Grid Mode games yet.</div>';
+  }
+  lbDiv.innerHTML = '<h3 style="color:var(--plum); margin:0 0 10px;">🔢 Grid Mode Leaderboard</h3>' + table;
+
+  cardsDiv.innerHTML = '<h3 style="color:var(--plum); margin:26px 0 10px;">Player Stats</h3>';
   summary.forEach(u=>{
     const details = document.createElement('details');
     details.className = 'user-card';
-    const sortedSessions = [...u.sessions].sort((a,b)=> new Date(b.date) - new Date(a.date));
-    let sessionsHtml = '';
-    sortedSessions.forEach(s=>{
-      const d = new Date(s.date);
-      const dateStr = d.toLocaleDateString(undefined, {month:'short', day:'numeric'});
-      sessionsHtml += `<div class="session-row">
-        <span class="nums">${dateStr} · ${s.numbers.join(',')}s (${s.squares} sq)</span>
-        <span>${formatTime(Math.round(s.time))} · ${s.accuracy}%</span>
-      </div>`;
-    });
-    details.innerHTML = `
-      <summary>${escapeHtml(u.name)} <span style="font-size:12px;color:var(--muted);">${u.sessions.length} session${u.sessions.length>1?'s':''}</span></summary>
-      <div class="best-pin">🏆 Best: ${formatTime(Math.round(u.bestTime))} at ${u.bestAcc}% accuracy</div>
-      ${sessionsHtml}
-    `;
+
+    let gridHtml = '';
+    if(u.gridSessions.length){
+      const sorted = [...u.gridSessions].sort((a,b)=> new Date(b.date) - new Date(a.date));
+      gridHtml += `<div class="best-pin">🏆 Grid Mode best: ${formatTime(Math.round(u.bestTime))} at ${u.bestAcc}% accuracy</div>`;
+      sorted.slice(0,5).forEach(s=>{
+        const d = new Date(s.date);
+        const dateStr = d.toLocaleDateString(undefined, {month:'short', day:'numeric'});
+        gridHtml += `<div class="session-row"><span class="nums">${dateStr} · Grid Mode</span><span>${formatTime(Math.round(s.time))} · ${s.accuracy}%</span></div>`;
+      });
+    }
+
+    let practiceHtml = '';
+    const combos = Object.values(u.practice).sort((a,b)=> b.bestCorrect - a.bestCorrect);
+    if(combos.length){
+      practiceHtml += `<div style="padding:14px 20px 4px; font-weight:800; color:var(--plum); font-size:12px; text-transform:uppercase; letter-spacing:0.03em;">⚡ Practice Mode bests</div>`;
+      combos.forEach(c=>{
+        practiceHtml += `<div class="session-row"><span class="nums">${formatNumbersLabel(c.numbers)}</span><span>${c.bestCorrect} correct (best)</span></div>`;
+      });
+    }
+
+    if(!gridHtml && !practiceHtml){
+      gridHtml = '<div class="session-row"><span class="nums">No sessions yet</span></div>';
+    }
+
+    details.innerHTML = `<summary>${escapeHtml(u.name)}</summary>${gridHtml}${practiceHtml}`;
     cardsDiv.appendChild(details);
   });
 }
