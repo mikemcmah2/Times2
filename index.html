@@ -1044,6 +1044,7 @@ function handleDrillSubmit(){
     drillCorrect++;
     nextDrillFact();
   } else {
+    scheduleRetry(drillCurrentFact);
     drillLocked = true;
     renderDrillSlots(true);
     setTimeout(()=>{
@@ -1052,6 +1053,13 @@ function handleDrillSubmit(){
       if(drillTimeLeft > 0 && stillOnDrill) nextDrillFact();
     }, 2000);
   }
+}
+function scheduleRetry(fact){
+  // Re-insert the missed fact so it resurfaces after 2-3 other facts, not just
+  // whenever it happens to come up again in the shuffled bag.
+  const gap = 2 + Math.floor(Math.random() * 2); // 2 or 3 other facts in between
+  const insertIndex = Math.max(0, drillBag.length - gap);
+  drillBag.splice(insertIndex, 0, fact);
 }
 function startDrillTimer(){
   drillTimerInterval = setInterval(()=>{
