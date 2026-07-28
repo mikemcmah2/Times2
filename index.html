@@ -458,8 +458,10 @@
   <div class="wrap" style="justify-content:center;">
     <div style="display:flex; justify-content:space-between; width:100%; max-width:420px; margin-bottom:14px;">
       <div class="status-chip" id="drill-label-chip">2s</div>
+      <div class="status-chip" id="drill-correct-chip">✓ 0</div>
       <div class="status-chip" id="drill-timer-chip">1:00</div>
     </div>
+    <button class="btn ghost" id="drill-restart-btn" style="max-width:420px; margin-bottom:14px;">↻ Restart</button>
     <div class="card" style="text-align:center; max-width:420px;">
       <div id="drill-equation" style="font-size:38px; font-weight:700; color:var(--plum); margin-bottom:18px; font-family:'Fredoka',sans-serif;">— × — = ?</div>
       <div id="drill-boxes-row" style="display:flex; justify-content:center; gap:10px; margin-bottom:18px; flex-wrap:wrap;"></div>
@@ -477,7 +479,6 @@
         <button class="key" data-key="0">0</button>
         <button class="key back" data-key="back">⌫</button>
       </div>
-      <button class="link-btn" id="drill-restart-btn" style="margin-top:16px;">↻ Restart</button>
     </div>
   </div>
   <div id="drill-start-overlay" class="drill-overlay">
@@ -579,10 +580,11 @@ function saveData(data){
 function migrateUser(u){
   if(!u.gridSessions) u.gridSessions = u.sessions || [];
   if(!u.practice) u.practice = {};
+  if(!u.timeLog) u.timeLog = [];
   return u;
 }
 function ensureUser(data, name){
-  if(!data.users[name]) data.users[name] = { gridSessions: [], practice: {} };
+  if(!data.users[name]) data.users[name] = { gridSessions: [], practice: {}, timeLog: [] };
   data.users[name] = migrateUser(data.users[name]);
   return data;
 }
@@ -590,6 +592,13 @@ function addGridSession(name, session){
   let data = loadData();
   data = ensureUser(data, name);
   data.users[name].gridSessions.push(session);
+  saveData(data);
+}
+function logTimeSpent(name, seconds){
+  if(!name || !(seconds > 0)) return;
+  let data = loadData();
+  data = ensureUser(data, name);
+  data.users[name].timeLog.push({ date: new Date().toISOString(), seconds: Math.round(seconds) });
   saveData(data);
 }
 function recordPracticeResult(name, numbersArr, correct, total){
@@ -611,6 +620,42 @@ function formatNumbersLabel(numbers){
   if(labels.length === 1) return labels[0];
   if(labels.length === 2) return labels[0] + ' & ' + labels[1];
   return labels.slice(0,-1).join(', ') + ' & ' + labels[labels.length-1];
+}
+function getPeriodBoundaries(){
+  const now = new Date();
+  const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const startOfWeek = new Date(startOfToday);
+  startOfWeek.setDate(startOfToday.getDate() - startOfToday.getDay()); // week starts Sunday
+  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+  const startOfQuarter = new Date(now.getFullYear(), Math.floor(now.getMonth()/3)*3, 1);
+  const startOfYear = new Date(now.getFullYear(), 0, 1);
+  return { today: startOfToday, week: startOfWeek, month: startOfMonth, quarter: startOfQuarter, year: startOfYear };
+}
+function sumTimeInRange(timeLog, startDate){
+  const startMs = startDate.getTime();
+  return timeLog.filter(e => new Date(e.date).getTime() >= startMs)
+                .reduce((sum,e) => sum + e.seconds, 0);
+}
+function computeTimeStats(timeLog){
+  const b = getPeriodBoundaries();
+  return {
+    today: sumTimeInRange(timeLog, b.today),
+    week: sumTimeInRange(timeLog, b.week),
+    month: sumTimeInRange(timeLog, b.month),
+    quarter: sumTimeInRange(timeLog, b.quarter),
+    year: sumTimeInRange(timeLog, b.year),
+    allTime: timeLog.reduce((sum,e) => sum + e.seconds, 0)
+  };
+}
+function formatDuration(totalSeconds){
+  const s = Math.round(totalSeconds);
+  if(s < 60) return `${s}s`;
+  const m = Math.floor(s/60);
+  const remS = s % 60;
+  if(m < 60) return remS > 0 ? `${m}m ${remS}s` : `${m}m`;
+  const h = Math.floor(m/60);
+  const remM = m % 60;
+  return remM > 0 ? `${h}h ${remM}m` : `${h}h`;
 }
 
 /* =========================================================
@@ -642,7 +687,21 @@ let drillLocked = false;
 let drillTimerInterval = null;
 let drillTimeLeft = 60;
 
+// Tracks the currently-running gameplay timer (grid or drill), regardless of
+// mode, so we can log real elapsed time even if the student leaves early.
+let activeTimerStart = null;
+let activeTimerUser = null;
+function stopActiveTimerAndLog(){
+  if(activeTimerStart !== null && activeTimerUser){
+    const elapsed = (Date.now() - activeTimerStart) / 1000;
+    logTimeSpent(activeTimerUser, elapsed);
+  }
+  activeTimerStart = null;
+  activeTimerUser = null;
+}
+
 function showScreen(id){
+  stopActiveTimerAndLog();
   clearInterval(timerInterval);
   clearInterval(drillTimerInterval);
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
@@ -818,6 +877,8 @@ function updateProgressChip(){
 /* ---------- TIMER ---------- */
 function startTimer(){
   startTime = Date.now();
+  activeTimerStart = startTime;
+  activeTimerUser = currentUser;
   timerInterval = setInterval(()=>{
     const elapsed = Math.floor((Date.now()-startTime)/1000);
     document.getElementById('timer-chip').textContent = formatTime(elapsed);
@@ -897,35 +958,13 @@ document.getElementById('keypad').addEventListener('click', (e) => {
 function handleSubmit(){
   const guess = parseInt(currentEntry, 10);
   const cell = gridCells[currentCellIndex];
-  const t = document.getElementById('attempts-text');
   if(guess === cell.answer){
     markCell(cell, 'correct');
     correctCount++;
-    t.textContent = '';
-    t.classList.remove('warn');
-    advance();
   } else {
-    currentAttempts++;
-    if(currentAttempts >= 3){
-      markCell(cell, 'revealed');
-      t.textContent = '';
-      t.classList.remove('warn');
-      advance();
-    } else {
-      const remaining = 3 - currentAttempts;
-      t.textContent = `Try again — ${remaining} attempt${remaining>1?'s':''} left.`;
-      t.classList.add('warn');
-      currentEntry = '';
-      renderSlots();
-      const cellEl = document.getElementById(`cell-${cell.row}-${cell.col}`);
-      cellEl.classList.remove('active-cell');
-      cellEl.classList.add('wrong-flash');
-      setTimeout(()=>{
-        cellEl.classList.remove('wrong-flash');
-        cellEl.classList.add('active-cell');
-      }, 500);
-    }
+    markCell(cell, 'revealed');
   }
+  advance();
 }
 function markCell(cell, status){
   cell.status = status;
@@ -983,6 +1022,7 @@ function setupDrill(){
   drillLocked = false;
   drillTimeLeft = 60;
   document.getElementById('drill-timer-chip').textContent = formatTime(drillTimeLeft);
+  document.getElementById('drill-correct-chip').textContent = '✓ 0';
   document.getElementById('drill-equation').textContent = '— × — = ?';
   document.getElementById('drill-boxes-row').innerHTML = '';
 }
@@ -1042,6 +1082,7 @@ function handleDrillSubmit(){
   drillTotal++;
   if(guess === answer){
     drillCorrect++;
+    document.getElementById('drill-correct-chip').textContent = '✓ ' + drillCorrect;
     nextDrillFact();
   } else {
     scheduleRetry(drillCurrentFact);
@@ -1062,6 +1103,8 @@ function scheduleRetry(fact){
   drillBag.splice(insertIndex, 0, fact);
 }
 function startDrillTimer(){
+  activeTimerStart = Date.now();
+  activeTimerUser = currentUser;
   drillTimerInterval = setInterval(()=>{
     drillTimeLeft--;
     document.getElementById('drill-timer-chip').textContent = formatTime(Math.max(0,drillTimeLeft));
@@ -1077,6 +1120,7 @@ document.getElementById('drill-start-btn').onclick = () => {
   nextDrillFact();
 };
 document.getElementById('drill-restart-btn').onclick = () => {
+  stopActiveTimerAndLog();
   clearInterval(drillTimerInterval);
   setupDrill();
   document.getElementById('drill-start-overlay').style.display = 'flex';
@@ -1152,9 +1196,10 @@ function renderHistory(){
     const u = data.users[name];
     const gridSessions = u.gridSessions;
     const practice = u.practice;
+    const timeLog = u.timeLog;
     const bestTime = gridSessions.length ? gridSessions.reduce((m,s)=> s.time < m ? s.time : m, Infinity) : null;
     const bestAcc = gridSessions.length ? gridSessions.reduce((m,s)=> s.accuracy > m ? s.accuracy : m, 0) : null;
-    return { name, bestTime, bestAcc, gridSessions, practice };
+    return { name, bestTime, bestAcc, gridSessions, practice, timeLog };
   });
 
   const gridRanked = historySummary.filter(u => u.bestTime !== null).sort((a,b)=> a.bestTime - b.bestTime);
@@ -1186,6 +1231,17 @@ function renderPlayerDetail(name){
   const u = historySummary.find(x => x.name === name);
   if(!u){ detailDiv.innerHTML = ''; return; }
 
+  const ts = computeTimeStats(u.timeLog || []);
+  const timeHtml = `
+    <div style="padding:14px 20px 4px; font-weight:800; color:var(--plum); font-size:12px; text-transform:uppercase; letter-spacing:0.03em;">⏱ Time Spent</div>
+    <div class="session-row"><span class="nums">Today</span><span>${formatDuration(ts.today)}</span></div>
+    <div class="session-row"><span class="nums">This Week</span><span>${formatDuration(ts.week)}</span></div>
+    <div class="session-row"><span class="nums">This Month</span><span>${formatDuration(ts.month)}</span></div>
+    <div class="session-row"><span class="nums">This Quarter</span><span>${formatDuration(ts.quarter)}</span></div>
+    <div class="session-row"><span class="nums">This Year</span><span>${formatDuration(ts.year)}</span></div>
+    <div class="session-row"><span class="nums">All Time</span><span>${formatDuration(ts.allTime)}</span></div>
+  `;
+
   let gridHtml = '';
   if(u.gridSessions.length){
     const sorted = [...u.gridSessions].sort((a,b)=> new Date(b.date) - new Date(a.date));
@@ -1213,7 +1269,7 @@ function renderPlayerDetail(name){
   const card = document.createElement('div');
   card.className = 'user-card';
   card.style.marginTop = '14px';
-  card.innerHTML = gridHtml + practiceHtml;
+  card.innerHTML = timeHtml + gridHtml + practiceHtml;
   detailDiv.innerHTML = '';
   detailDiv.appendChild(card);
 }

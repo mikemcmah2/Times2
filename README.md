@@ -14,10 +14,10 @@ A times-table practice app with two modes: **Grid Mode** (fill the full 1-12 gri
 
 - **Name entry**: type a new name (required), or pick a returning player from the dropdown.
 - **Mode select**: choose Grid Mode or Practice Mode each time you play.
-- **Grid Mode**: full 1-12 × 1-12 grid (144 squares), shuffled each round. A wrong attempt flashes red immediately, then lets you try again (3 attempts total); after 3 misses the answer is revealed in red. Best time + accuracy tracked per player on a leaderboard.
-- **Practice Mode**: pick any combination of tables. One fact at a time, 1-minute timer. Correct answers advance instantly; wrong answers flash red for 2 seconds before moving on — and resurface again 2-3 facts later for a quick retry. A Restart link resets the round anytime. Leaving the page mid-round stops the timer. Best "correct in 1 minute" tracked per player per number combination.
+- **Grid Mode**: full 1-12 × 1-12 grid (144 squares), shuffled each round. One attempt per square — correct turns it green, wrong immediately reveals the answer in red and moves on. Best time + accuracy tracked per player on a leaderboard.
+- **Practice Mode**: pick any combination of tables. One fact at a time, 1-minute timer, with a live "✓ correct" counter alongside the clock. Correct answers advance instantly; wrong answers flash red for 2 seconds before moving on — and resurface again 2-3 facts later for a quick retry. A Restart button above the problem resets the round anytime. Best "correct in 1 minute" tracked per player per number combination.
 - **Results screen**: buttons are briefly disabled for 3 seconds after finishing. Includes a New Player button.
-- **History**: Grid Mode and Practice Mode quick-jump buttons at the top, a Grid Mode leaderboard, and a player dropdown to see individual stats.
+- **History**: Grid Mode and Practice Mode quick-jump buttons at the top, a Grid Mode leaderboard, and a player dropdown showing individual stats — including Time Spent broken down by Today / This Week / This Month / This Quarter / This Year / All Time.
 
 ## App icon
 
@@ -27,4 +27,4 @@ Icon files are already linked from `index.html` and `manifest.json` — keep the
 
 ## Notes
 
-Player names, sessions, and best stats are saved in the browser's local storage, per device/browser.
+Player names, sessions, and stats are saved in the browser's local storage, per device/browser.
